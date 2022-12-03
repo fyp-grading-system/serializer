@@ -30,21 +30,13 @@ public class SerializerController {
 
   @PostMapping("/serialize")
   public String uploadCSVFile(@RequestParam("file") MultipartFile file) {
-
-    // validate file
     try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-
-      // create csv bean reader
       CsvToBean<Wrapper> csvToBean = new CsvToBeanBuilder<Wrapper>(reader)
           .withSeparator(',')
           .withType(Wrapper.class)
           .withIgnoreLeadingWhiteSpace(true)
           .build();
-
-      // convert `CsvToBean` object to list of Wrappers
       List<Wrapper> wrappers = csvToBean.parse();
-
-      System.out.println(Json.encode(wrappers));
 
       wrappers.forEach(wrapper -> {
         var teamUUID = UUID.randomUUID().toString();
@@ -72,8 +64,8 @@ public class SerializerController {
         teamJson.put("supervisor", wrapper.getSupervisor());
         Message teamMessage = Message
             .builder()
-            .type("create-squad")
-            .queue("squads")
+            .type("create-team")
+            .queue("teams")
             .order(Json.encode(teamJson))
             .build();
 
@@ -88,7 +80,7 @@ public class SerializerController {
         Message jury1Message = Message
             .builder()
             .type("create-jury")
-            .queue("referees")
+            .queue("jury")
             .order(Json.encode(juryJson))
             .build();
 
@@ -103,7 +95,7 @@ public class SerializerController {
         Message jury2Message = Message
             .builder()
             .type("create-jury")
-            .queue("referees")
+            .queue("jury")
             .order(Json.encode(juryJson))
             .build();
 
@@ -118,16 +110,13 @@ public class SerializerController {
         Message jury3Message = Message
             .builder()
             .type("create-jury")
-            .queue("referees")
+            .queue("jury")
             .order(Json.encode(juryJson))
             .build();
 
         queueSender.send(jury3Message);
 
       });
-
-      // TODO: save users in DB?
-
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
@@ -139,7 +128,6 @@ public class SerializerController {
   public String submitCsvFile(@RequestParam("file") MultipartFile file) {
     try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
 
-      // create csv bean reader
       CsvToBean<Grading> csvToBean = new CsvToBeanBuilder<Grading>(reader)
           .withSeparator(',')
           .withType(Grading.class)
